@@ -1,0 +1,8 @@
+{
+  "utterance": "play audio bible",
+  "intent_type": "BibleAudioIntent",
+  "intent": {
+    "BibleAudioKeyword": "bible",
+    "Word": "audio"
+  }
+}
