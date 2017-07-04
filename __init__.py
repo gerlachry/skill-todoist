@@ -17,6 +17,10 @@ class TodoistSkill(MycroftSkill):
 
     def __init__(self):
         super(TodoistSkill, self).__init__(name="TodoistSkill")
+        self.client_id = self.config.get('client_id')
+        self.auth_url = 'https://todoist.com/oauth/authorize'
+        self.test_token = self.config.get('test_token')
+        LOGGER.debug('client_id: {0}'.format(self.client_id))
 
     def initialize(self):
         intent = IntentBuilder("TodoistIntent")\
@@ -34,18 +38,18 @@ class TodoistSkill(MycroftSkill):
 
         try:
             self.speak_dialog('add.task')
-            params = {'client_id': '4585b6dcee2746aa9f2d0fcc26c0a2d1'
-                      , 'scope': 'data:read_write'
-                      , 'state': 'supersecret'}
-            resp = requests.get('https://todoist.com/oauth/authorize', params=params)
-            LOGGER.debug('auth resp: {0}'.format(resp.status_code))
-            LOGGER.debug('auth resp: {0}'.format(resp.headers))
-            LOGGER.debug('auth cookeies: {0}'.format(resp.cookies.keys))
-            LOGGER.debug('auth history: {0}'.format(resp.history))
-            LOGGER.debug('auth redirect: {0}'.format(resp.history[0].text))
+            if self.test_token is None:
+                params = {'client_id': self.client_id
+                          , 'scope': 'data:read_write'
+                          , 'state': 'supersecret'}
+                resp = requests.get(self.auth_url, params=params)
+                LOGGER.debug('auth resp: {0}'.format(resp.status_code))
+                LOGGER.debug('auth resp: {0}'.format(resp.headers))
+                LOGGER.debug('auth cookeies: {0}'.format(resp.cookies.keys))
+                LOGGER.debug('auth history: {0}'.format(resp.history))
+                LOGGER.debug('auth redirect: {0}'.format(resp.history[0].text))
 
-
-            api = todoist.TodoistAPI('b7ece3720d9114693aa49dd30021f15a7011cb10')
+            api = todoist.TodoistAPI(self.test_token)
             resp = api.sync()
             prj_id = None
             for prj in api.projects.all():
