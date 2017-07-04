@@ -1,4 +1,4 @@
-# Todoist skill
+# Mycroft Todoist skill
 Uses https://developer.todoist.com/?python#api-overviewapi APIs for creating tasks under a project.
 
 ## Requirements
