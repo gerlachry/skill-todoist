@@ -17,6 +17,14 @@ class TodoistSkill(MycroftSkill):
     def __init__(self):
         super(TodoistSkill, self).__init__(name="TodoistSkill")
         self.token = self.config.get('token')
+        self.api = todoist.TodoistAPI(token=self.token)
+        self.api.sync()
+
+        LOGGER.debug('initial project count {0}'.format(len(self.api.projects.all())))
+        for project in self.api.projects.all():
+            LOGGER.debug(project)
+            LOGGER.debug(project['name'] + ' ' + str(project['id']))
+            LOGGER.debug('project deleted: {0} project archived: {1}'.format(project['is_deleted'], project['is_archived']))
 
     def initialize(self):
         intent = IntentBuilder("TodoistIntent")\
@@ -26,6 +34,22 @@ class TodoistSkill(MycroftSkill):
             .build()
         self.register_intent(intent, self.handle_intent)
 
+    def _get_project(self, name):
+        """lookup project by name, create if not found"""
+        project = None
+        for prj in self.api.projects.all():
+            if prj['name'].lower() == name:
+                project = prj
+                break
+
+        if not project:
+            self.speak_dialog('add.project')
+            LOGGER.debug('creating new project')
+            project = self.api.projects.add(name)
+
+        LOGGER.debug('using project {0}'.format(project))
+        return project
+
     def handle_intent(self, message):
         task = message.data.get('Task', None)
         project = message.data.get('Project', None)
@@ -33,26 +57,18 @@ class TodoistSkill(MycroftSkill):
 
         try:
             self.speak_dialog('add.task')
-            api = todoist.TodoistAPI(self.token)
-            api.sync()
-            prj_id = None
-            for prj in api.projects.all():
-                if prj['name'].lower() == project:
-                    prj_id = prj['id']
-                    break
+            self.api.sync()
 
-            if prj_id is None:
-                # TODO: add project creation method
-                LOGGER.debug('project {0} not found, please create it first in Todoist'.format(project))
-                self.speak_dialog('project.notfound')
+            prj = self._get_project(project)
+            item = self.api.items.add(task, prj['id'])
+            LOGGER.debug('item: {0}'.format(item))
+            self.api.commit()
+            if 'id' in item:
+                self.speak_dialog('add.task.complete')
             else:
-                item = api.add_item(content=task, project_id=prj_id)
-                if 'id' in item:
-                    self.speak_dialog('add.task.complete')
-                else:
-                    LOGGER.error('Failed to add task {0} to project {1}'.format(task, project))
-                    LOGGER.error(item)
-                    self.speak_dialog('add.task.failure')
+                LOGGER.error('Failed to add task {0} to project {1}'.format(task, project))
+                LOGGER.error(item)
+                self.speak_dialog('add.task.failure')
 
         except Exception as e:
             LOGGER.exception("Error: {0}".format(e))
