@@ -40,7 +40,6 @@ class TodoistSkill(MycroftSkill):
             LOGGER.debug('creating new project')
             project = self.api.projects.add(name)
 
-        LOGGER.debug('using project {0}'.format(project))
         return project
 
     def handle_intent(self, message):
