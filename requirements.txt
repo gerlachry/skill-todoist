@@ -6,7 +6,7 @@ idna==2.5
 mustache==0.1.4
 mycroft-skills-sdk==0.1.20
 pyee==1.0.1
-requests==2.18.1
+requests==2.20.0
 six==1.10.0
 todoist-python==7.0.17
 urllib3==1.21.1
